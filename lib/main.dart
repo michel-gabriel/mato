@@ -11,7 +11,9 @@ import 'package:flutter_picker/flutter_picker.dart';
 String tomatoPic = 'images/realistic-tomato-isolated/6146.jpg';
 
 void main() {
-  runApp(Mato());
+  runApp(MaterialApp(
+      home:
+          Mato())); // Wrap main app in materialapp if you recieve localization problems from gesture.
 }
 
 class Mato extends StatefulWidget {
@@ -24,8 +26,12 @@ class _MatoState extends State<Mato> {
   bool timerDone = false;
   bool controlTimer = false;
   Timer masterTime;
-  double percentComplete = 50;
- 
+  double percentComplete = 0;
+  int customTime = 25;
+  int tempInt = 0;
+  int tomatoQuantity = 0; 
+  int userGoal = 5; 
+
   // List choices = [
   //   CustomPopupMenu(title: 'Home', icon: Icons.home),
   //   CustomPopupMenu(title: 'Bookmarks', icon: Icons.bookmark),
@@ -45,7 +51,7 @@ class _MatoState extends State<Mato> {
           ),
         ),
         body: SafeArea(
-                  child: Container(
+          child: Container(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -89,11 +95,11 @@ class _MatoState extends State<Mato> {
     if (controlTimer == true) {
       masterTimer();
 
-      return myTimer;
+      return myTimer(customTime);
     } else {
       if (controlTimer == false) {
         return Text(
-          '5 Seconds',
+          '$customTime Seconds',
           style: TextStyle(
             fontSize: 40,
             color: Colors.white,
@@ -104,27 +110,30 @@ class _MatoState extends State<Mato> {
     }
   }
 
-  Widget myTimer = Countdown(
-    seconds: 5, //1500 secs = 25 min
-    build: (_, double time) => Text(
-      time.toString(),
-      style: TextStyle(
-        fontSize: 72,
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
+  Widget myTimer(int customTimer) {
+    return Countdown(
+
+   
+      seconds: customTimer, //1500 secs = 25 min
+      build: (_, double customTime) => Text(
+        customTime.toString(),
+        style: TextStyle(
+          fontSize: 72,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-    ),
-    interval: Duration(milliseconds: 100),
-    // onFinished: (List<Image> completedMato) {
-    //   completedMato.add(Image.asset(tomatoPic));
-    //   print(completedMato);
-    // }
-    onFinished: (masterTime) {
-      masterTime.cancel();
-    },
-  );
+      interval: Duration(milliseconds: 100),
+
+      onFinished: (masterTime) {
+       
+        masterTime.cancel();
+      },
+    );
+  }
 
   void addTomato() {
+     
     return setState(() {
       completedMato.add(
         Image(
@@ -133,17 +142,45 @@ class _MatoState extends State<Mato> {
           width: 25,
         ),
       );
+       ++tomatoQuantity;
+      percentComplete = (tomatoQuantity / userGoal)*100;
+      print(percentComplete);
       print('Updated Count');
       controlTimer = false;
     });
   }
 
+  // Future finishedGoal() async{ //Edit this to pop up, it wont show. 
+  //   return showDialog(
+  //   context: context,
+  //   barrierDismissible: false, // user must tap button!
+  //   builder: (BuildContext context) {
+  //     return AlertDialog(
+  //       title: Text('AlertDialog Title'),
+  //       content: SingleChildScrollView(
+  //         child: ListBody(
+  //           children: <Widget>[
+  //             Text('This is a demo alert dialog.'),
+  //             Text('Would you like to approve of this message?'),
+  //           ],
+  //         ),
+  //       ),
+  //       actions: <Widget>[
+  //         FlatButton(
+  //           child: Text('Approve'),
+  //           onPressed: () {
+  //             Navigator.of(context).pop();
+  //           },
+  //         ),
+  //       ],
+  //     );
+  //   },
+  // );
+  // }
+
   void masterTimer() {
-    masterTime = new Timer(new Duration(seconds: 5), addTomato);
+    masterTime = new Timer(new Duration(seconds: customTime), addTomato);
   }
-
-
-
 
   Widget floatMenu() {
     return Container(
@@ -169,92 +206,123 @@ class _MatoState extends State<Mato> {
                   masterTime.cancel();
                 });
               }),
-          // PopupMenuButton(itemBuilder: null)
+          PopupMenuButton<int>(
+            icon: Icon(
+              Icons.apps,
+              color: Colors.orange,
+            ),
+            offset: Offset(-35, -120),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 1,
+                child: Text("Custom Countdown"),
+              ),
+              PopupMenuItem(
+                value: 2,
+                child: Text("Custom Break"),
+              ),
+              PopupMenuItem(
+                value: 3,
+                child: Text("Set Goal"),
+              ),
+            ],
+            onSelected: (value) {
+              switch (value) {
+                case 1:
+                  {
+                    print("Just set timer");
 
-          FlatButton(
-            onPressed: (){
+                    Picker(
+                        adapter: NumberPickerAdapter(data: [
+                          NumberPickerColumn(begin: 0, end: 12),
+                          NumberPickerColumn(begin: 0, end: 59),
+                        ]),
+                        delimiter: [
+                          PickerDelimiter(
+                              child: Container(
+                            width: 80.0,
+                            alignment: Alignment.center,
+                            child: Text('Hr | Mn'),
+                          ))
+                        ],
+                        hideHeader: true,
+                        title: new Text("Select Hours and Minutes"),
+                        onConfirm: (Picker picker, List value) {
+                          
+                          tempInt = value[0] * 60;
+                          tempInt += value[1];
 
-              
-                
-              
+                          setState(() {
+                            customTime = tempInt;
+                            controlTimer = false;
+                          });
+                        }).showDialog(context);
+                  }
+                  break;
+
+                case 2:
+                  {
+                    print("Just set break");
+
+                    Picker(
+                        adapter: NumberPickerAdapter(data: [
+                          NumberPickerColumn(begin: 1, end: 59),
+                        ]),
+                        delimiter: [
+                          PickerDelimiter(
+                              child: Container(
+                            width: 80.0,
+                            alignment: Alignment.center,
+                            child: Text('Minutes'),
+                          ))
+                        ],
+                        hideHeader: true,
+                        title: new Text("Select Minutes"),
+                        onConfirm: (Picker picker, List value) {
+                          Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this. 
+                          
+                        }).showDialog(context);
+                  }
+                  break;
+
+                case 3:
+                  {
+                    print("Just set goal");
+
+                    Picker(
+                        adapter: NumberPickerAdapter(data: [
+                          NumberPickerColumn(begin: 1, end: 100),
+                        ]),
+                        delimiter: [
+                          PickerDelimiter(
+                              child: Container(
+                            width: 80.0,
+                            alignment: Alignment.center,
+                            child: Image(
+                              image: AssetImage(tomatoPic),
+                              height: 25,
+                              width: 25,
+                            ),
+                          ))
+                        ],
+                        hideHeader: true,
+                        looping: true,
+                        title: new Text("Select a Goal"),
+                        onConfirm: (Picker picker, List value) {
+                          print(value[0]);
+                          setState(() {
+                            percentComplete = 0; 
+                            tomatoQuantity = 0; 
+                           userGoal = value[0] + 1;
+                           completedMato.clear();
+                           
+                          });
+                        }).showDialog(context);
+                  }
+                  break;
+              }
             },
-            
-            child: Icon(Icons.apps, color: Colors.orange),
           ),
-
-          // PopupMenuButton<int>(
-          //   icon: Icon(
-          //     Icons.apps,
-          //     color: Colors.orange,
-          //   ),
-          //   offset: Offset(-35, -120),
-          //   itemBuilder: (context) => [
-          //     PopupMenuItem(
-          //       value: 1,
-          //       child: Text("Custom Countdown"),
-          //     ),
-          //     PopupMenuItem(
-          //       value: 2,
-          //       child: Text("Custom Break"),
-          //     ),
-          //     PopupMenuItem(
-          //       value: 3,
-          //       child: Text("Set Goal"),
-          //     ),
-          //   ],
-          //   onSelected: (value) {
-          //     switch (value) {
-          //       case 1:
-          //         {
-          //           print("Just set timer");
-
-          //           // new NumberPickerDialog.decimal(
-          //           //   minValue: 1, maxValue: 60, initialDoubleValue: 32,
-          //           //   );
-
-          //           setState(() {
-          //              Container(child: Text('TEST DIALOG'),
-          //             );
-          //           });
-
-          //             //  Picker(
-          //             //       adapter: NumberPickerAdapter(data: [
-          //             //         NumberPickerColumn(begin: 0, end: 999),
-          //             //         NumberPickerColumn(begin: 100, end: 200),
-          //             //       ]),
-          //             //       delimiter: [
-          //             //         PickerDelimiter(
-          //             //             child: Container(
-          //             //           width: 30.0,
-          //             //           alignment: Alignment.center,
-          //             //           child: Icon(Icons.more_vert),
-          //             //         ))
-          //             //       ],
-          //             //       hideHeader: true,
-          //             //       title: new Text("Please Select"),
-          //             //       onConfirm: (Picker picker, List value) {
-          //             //         print(value.toString());
-          //             //         print(picker.getSelectedValues());
-          //             //       }).showDialog(context);
-
-          //         }
-          //         break;
-
-          //       case 2:
-          //         {
-          //           print("Just set break");
-          //         }
-          //         break;
-
-          //       case 3:
-          //         {
-          //           print("Just set goal");
-          //         }
-          //         break;
-          //     }
-          //   },
-          // ),
-
           FlatButton(
               child: Icon(Icons.alarm_add, color: Colors.green),
               onPressed: () {

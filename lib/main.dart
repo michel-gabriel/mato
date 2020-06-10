@@ -27,10 +27,11 @@ class _MatoState extends State<Mato> {
   bool controlTimer = false;
   Timer masterTime;
   double percentComplete = 0;
-  int customTime = 25;
+  int customTime = 1500;
   int tempInt = 0;
-  int tomatoQuantity = 0; 
-  int userGoal = 5; 
+  int tomatoQuantity = 0;
+  int userGoal = 2;
+  int breakTime = 0;
 
   // List choices = [
   //   CustomPopupMenu(title: 'Home', icon: Icons.home),
@@ -79,6 +80,11 @@ class _MatoState extends State<Mato> {
                           margin: EdgeInsets.symmetric(vertical: 10),
                           borderRadius: BorderRadius.circular(24),
                           percent: percentComplete,
+                          childCenter: Text(
+                            '$tomatoQuantity/$userGoal',
+                            style: TextStyle(
+                                fontSize: 8.5, fontWeight: FontWeight.bold),
+                          ),
                           //childCenter: Text('$percentComplete%', ),
                         ),
                       ]),
@@ -112,8 +118,6 @@ class _MatoState extends State<Mato> {
 
   Widget myTimer(int customTimer) {
     return Countdown(
-
-   
       seconds: customTimer, //1500 secs = 25 min
       build: (_, double customTime) => Text(
         customTime.toString(),
@@ -126,14 +130,31 @@ class _MatoState extends State<Mato> {
       interval: Duration(milliseconds: 100),
 
       onFinished: (masterTime) {
-       
         masterTime.cancel();
       },
     );
   }
 
+  dynamic breakPopup() {
+    return showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Noice! Now take a break.'),
+        content: Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Paragraph'),
+              
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+  }
+
   void addTomato() {
-     
     return setState(() {
       completedMato.add(
         Image(
@@ -142,15 +163,17 @@ class _MatoState extends State<Mato> {
           width: 25,
         ),
       );
-       ++tomatoQuantity;
-      percentComplete = (tomatoQuantity / userGoal)*100;
+      ++tomatoQuantity;
+      percentComplete = (tomatoQuantity / userGoal) * 100;
+
       print(percentComplete);
       print('Updated Count');
       controlTimer = false;
+      breakPopup();
     });
   }
 
-  // Future finishedGoal() async{ //Edit this to pop up, it wont show. 
+  // Future finishedGoal() async{ //Edit this to pop up, it wont show.
   //   return showDialog(
   //   context: context,
   //   barrierDismissible: false, // user must tap button!
@@ -200,6 +223,16 @@ class _MatoState extends State<Mato> {
                 Icons.cancel,
                 color: Colors.red,
               ),
+              onLongPress: () {
+                setState(() {
+                  completedMato.clear();
+                  percentComplete = 0;
+                  tomatoQuantity = 0;
+                  customTime = 1500;
+                  masterTime.cancel();
+                  userGoal = 2;
+                });
+              },
               onPressed: () {
                 setState(() {
                   controlTimer = false;
@@ -248,13 +281,14 @@ class _MatoState extends State<Mato> {
                         hideHeader: true,
                         title: new Text("Select Hours and Minutes"),
                         onConfirm: (Picker picker, List value) {
-                          
                           tempInt = value[0] * 60;
                           tempInt += value[1];
 
                           setState(() {
                             customTime = tempInt;
                             controlTimer = false;
+                            tomatoQuantity = 0;
+                            completedMato.clear();
                           });
                         }).showDialog(context);
                   }
@@ -265,23 +299,23 @@ class _MatoState extends State<Mato> {
                     print("Just set break");
 
                     Picker(
-                        adapter: NumberPickerAdapter(data: [
-                          NumberPickerColumn(begin: 1, end: 59),
-                        ]),
-                        delimiter: [
-                          PickerDelimiter(
-                              child: Container(
-                            width: 80.0,
-                            alignment: Alignment.center,
-                            child: Text('Minutes'),
-                          ))
-                        ],
-                        hideHeader: true,
-                        title: new Text("Select Minutes"),
-                        onConfirm: (Picker picker, List value) {
-                          Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this. 
-                          
-                        }).showDialog(context);
+                            adapter: NumberPickerAdapter(data: [
+                              NumberPickerColumn(begin: 1, end: 59),
+                            ]),
+                            delimiter: [
+                              PickerDelimiter(
+                                  child: Container(
+                                width: 80.0,
+                                alignment: Alignment.center,
+                                child: Text('Minutes'),
+                              ))
+                            ],
+                            hideHeader: true,
+                            title: new Text("Select Minutes"),
+                            onConfirm: (Picker picker, List value) {
+                              //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
+                            })
+                        .showDialog(context);
                   }
                   break;
 
@@ -311,11 +345,11 @@ class _MatoState extends State<Mato> {
                         onConfirm: (Picker picker, List value) {
                           print(value[0]);
                           setState(() {
-                            percentComplete = 0; 
-                            tomatoQuantity = 0; 
-                           userGoal = value[0] + 1;
-                           completedMato.clear();
-                           
+                            percentComplete = 0;
+                            tomatoQuantity = 0;
+
+                            userGoal = value[0] + 1;
+                            completedMato.clear();
                           });
                         }).showDialog(context);
                   }

@@ -27,7 +27,7 @@ class _MatoState extends State<Mato> {
   bool controlTimer = false;
   Timer masterTime;
   double percentComplete = 0;
-  int customTime = 1500;
+  int customTime = 2; // change this for default countdown
   int tempInt = 0;
   int tomatoQuantity = 0;
   int userGoal = 2;
@@ -136,15 +136,32 @@ class _MatoState extends State<Mato> {
   }
 
   dynamic breakPopup() {
+    double breakTimer = 0;
     return showDialog(
+      barrierColor: Colors.green[100],
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Noice! Now take a break.'),
+        contentPadding: EdgeInsets.all(0.0),
+        
         content: Container(
+         // padding: EdgeInsets.zero,
+        //  alignment: Alignment.topCenter,
           child: Column(
+            
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Paragraph'),
+              LinearProgressIndicator(
+               // value: breakTimer,
+                backgroundColor: Colors.green[100],
+                valueColor: new AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              SizedBox(height: 20,),
+              Text('Nice, now take a break. \n Your break has started.'),
+              FlatButton(onPressed: (){
+                setState(() {
+                  // breakTimer += .2 ;
+                });
+              }, child: Text('Tap Me')),
               
             ],
           ),

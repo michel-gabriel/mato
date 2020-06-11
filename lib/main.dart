@@ -31,7 +31,7 @@ class _MatoState extends State<Mato> {
   int tempInt = 0;
   int tomatoQuantity = 0;
   int userGoal = 2;
-  int breakTime = 0;
+  int breakTime = 5;
 
   // List choices = [
   //   CustomPopupMenu(title: 'Home', icon: Icons.home),
@@ -46,6 +46,18 @@ class _MatoState extends State<Mato> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.red,
+          leading: ExpansionPanel(
+      headerBuilder: (BuildContext context, bool isExpanded) {
+        return ListTile(
+          title: Text('Item 2'),
+        );
+      },
+      body: ListTile(
+        title: Text('Item 2 child'),
+        subtitle: Text('Details goes here'),
+      ),
+      isExpanded: false,
+    ),
           title: Text(
             "Mato Timer",
             style: TextStyle(color: Colors.grey.shade200),
@@ -71,22 +83,30 @@ class _MatoState extends State<Mato> {
                         Wrap(
                           children: completedMato,
                         ),
-                        floatMenu(),
-                        RoundedProgressBar(
-                          height: 8,
-                          theme: RoundedProgressBarTheme.green,
-                          style: RoundedProgressBarStyle(
-                              borderWidth: 0, widthShadow: 0),
-                          margin: EdgeInsets.symmetric(vertical: 10),
-                          borderRadius: BorderRadius.circular(24),
-                          percent: percentComplete,
-                          childCenter: Text(
-                            '$tomatoQuantity/$userGoal',
-                            style: TextStyle(
-                                fontSize: 8.5, fontWeight: FontWeight.bold),
+                        Container(
+
+                            child: Column(
+                            
+                              children: <Widget>[
+                                floatMenu(),
+                          RoundedProgressBar(
+                            height: 8,
+                            
+                            theme: RoundedProgressBarTheme.green,
+                            style: RoundedProgressBarStyle(
+                                borderWidth: 0, widthShadow: 0),
+                           // margin: EdgeInsets.symmetric(vertical: 10),
+                            borderRadius: BorderRadius.circular(24),
+                            percent: percentComplete,
+                            childCenter: Text(
+                              '$tomatoQuantity/$userGoal',
+                              style: TextStyle(
+                                  fontSize: 8.5, fontWeight: FontWeight.bold),
+                            ),
+                            //childCenter: Text('$percentComplete%', ),
                           ),
-                          //childCenter: Text('$percentComplete%', ),
-                        ),
+                          
+                        ])),
                       ]),
                 ),
               ],
@@ -135,42 +155,6 @@ class _MatoState extends State<Mato> {
     );
   }
 
-  dynamic breakPopup() {
-    double breakTimer = 0;
-    return showDialog(
-      barrierColor: Colors.green[100],
-      context: context,
-      builder: (_) => AlertDialog(
-        contentPadding: EdgeInsets.all(0.0),
-        
-        content: Container(
-         // padding: EdgeInsets.zero,
-        //  alignment: Alignment.topCenter,
-          child: Column(
-            
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LinearProgressIndicator(
-               // value: breakTimer,
-                backgroundColor: Colors.green[100],
-                valueColor: new AlwaysStoppedAnimation<Color>(Colors.blue),
-              ),
-              SizedBox(height: 20,),
-              Text('Nice, now take a break. \n Your break has started.'),
-              FlatButton(onPressed: (){
-                setState(() {
-                  // breakTimer += .2 ;
-                });
-              }, child: Text('Tap Me')),
-              
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
-    );
-  }
-
   void addTomato() {
     return setState(() {
       completedMato.add(
@@ -189,34 +173,6 @@ class _MatoState extends State<Mato> {
       breakPopup();
     });
   }
-
-  // Future finishedGoal() async{ //Edit this to pop up, it wont show.
-  //   return showDialog(
-  //   context: context,
-  //   barrierDismissible: false, // user must tap button!
-  //   builder: (BuildContext context) {
-  //     return AlertDialog(
-  //       title: Text('AlertDialog Title'),
-  //       content: SingleChildScrollView(
-  //         child: ListBody(
-  //           children: <Widget>[
-  //             Text('This is a demo alert dialog.'),
-  //             Text('Would you like to approve of this message?'),
-  //           ],
-  //         ),
-  //       ),
-  //       actions: <Widget>[
-  //         FlatButton(
-  //           child: Text('Approve'),
-  //           onPressed: () {
-  //             Navigator.of(context).pop();
-  //           },
-  //         ),
-  //       ],
-  //     );
-  //   },
-  // );
-  // }
 
   void masterTimer() {
     masterTime = new Timer(new Duration(seconds: customTime), addTomato);
@@ -261,19 +217,20 @@ class _MatoState extends State<Mato> {
               Icons.apps,
               color: Colors.orange,
             ),
-            offset: Offset(-35, -120),
+            offset: Offset(-90, -160),
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 1,
-                child: Text("Custom Countdown"),
+                child: Text("Set Custom Countdown", ),
+                
               ),
               PopupMenuItem(
                 value: 2,
-                child: Text("Custom Break"),
+                child: Text("Set Custom Break", ),
               ),
               PopupMenuItem(
                 value: 3,
-                child: Text("Set Goal"),
+                child: Text("Set Custom Goal", ),
               ),
             ],
             onSelected: (value) {
@@ -316,23 +273,26 @@ class _MatoState extends State<Mato> {
                     print("Just set break");
 
                     Picker(
-                            adapter: NumberPickerAdapter(data: [
-                              NumberPickerColumn(begin: 1, end: 59),
-                            ]),
-                            delimiter: [
-                              PickerDelimiter(
-                                  child: Container(
-                                width: 80.0,
-                                alignment: Alignment.center,
-                                child: Text('Minutes'),
-                              ))
-                            ],
-                            hideHeader: true,
-                            title: new Text("Select Minutes"),
-                            onConfirm: (Picker picker, List value) {
-                              //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
-                            })
-                        .showDialog(context);
+                        adapter: NumberPickerAdapter(data: [
+                          NumberPickerColumn(begin: 1, end: 59),
+                        ]),
+                        delimiter: [
+                          PickerDelimiter(
+                              child: Container(
+                            width: 80.0,
+                            alignment: Alignment.center,
+                            child: Text('Minutes'),
+                          ))
+                        ],
+                        hideHeader: true,
+                        title: new Text("Select Minutes"),
+                        onConfirm: (Picker picker, List value) {
+                          setState(() {
+                            breakTime = value[0];
+                          });
+
+                          //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
+                        }).showDialog(context);
                   }
                   break;
 
@@ -383,6 +343,71 @@ class _MatoState extends State<Mato> {
               }),
         ],
       ),
+    );
+  }
+
+  dynamic breakPopup() {
+    showDialog(
+      barrierColor: Colors.green[100],
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding: EdgeInsets.all(0.0),
+        content: Container(
+          // padding: EdgeInsets.zero,
+          //  alignment: Alignment.topCenter,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(
+                // value: breakTimer,
+
+                backgroundColor: Colors.green[100],
+                valueColor: new AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              Text('Nice work, now take a break',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  )),
+              Padding(
+                padding: const EdgeInsets.all(25.0),
+                child: Text(
+                  'We will remind you when it is time to get back to work.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Countdown(
+                seconds: breakTime, //1500 secs = 25 min
+                build: (_, double breakTime) => Text(
+                  breakTime.toString(),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                interval: Duration(seconds: 1),
+
+                onFinished: () {
+                  Navigator.pop(context, true);
+                },
+              ),
+              RaisedButton(
+                  elevation: 25,
+                  color: Colors.blue,
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  child: Text('I don\'t take breaks!')),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
     );
   }
 }

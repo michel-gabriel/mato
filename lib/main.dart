@@ -46,18 +46,15 @@ class _MatoState extends State<Mato> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.red,
-          leading: ExpansionPanel(
-      headerBuilder: (BuildContext context, bool isExpanded) {
-        return ListTile(
-          title: Text('Item 2'),
-        );
-      },
-      body: ListTile(
-        title: Text('Item 2 child'),
-        subtitle: Text('Details goes here'),
-      ),
-      isExpanded: false,
-    ),
+          leading: FloatingActionButton(
+            backgroundColor: Colors.red,
+            onPressed:(){
+              displayInfoDialog();
+            },
+          child: Icon(
+              Icons.info_outline,
+              color: Colors.white,
+            ),),
           title: Text(
             "Mato Timer",
             style: TextStyle(color: Colors.grey.shade200),
@@ -121,7 +118,7 @@ class _MatoState extends State<Mato> {
     if (controlTimer == true) {
       masterTimer();
 
-      return myTimer(customTime);
+      return myTimer();
     } else {
       if (controlTimer == false) {
         return Text(
@@ -136,10 +133,10 @@ class _MatoState extends State<Mato> {
     }
   }
 
-  Widget myTimer(int customTimer) {
+  Widget myTimer() {
     return Countdown(
-      seconds: customTimer, //1500 secs = 25 min
-      build: (_, double customTime) => Text(
+      seconds: customTime, //1500 secs = 25 min
+      build: (_, customTime) => Text(
         customTime.toString(),
         style: TextStyle(
           fontSize: 72,
@@ -204,6 +201,7 @@ class _MatoState extends State<Mato> {
                   customTime = 1500;
                   masterTime.cancel();
                   userGoal = 2;
+                  breakTime = 5;
                 });
               },
               onPressed: () {
@@ -262,6 +260,7 @@ class _MatoState extends State<Mato> {
                             customTime = tempInt;
                             controlTimer = false;
                             tomatoQuantity = 0;
+                            userGoal = 0;
                             completedMato.clear();
                           });
                         }).showDialog(context);
@@ -288,7 +287,7 @@ class _MatoState extends State<Mato> {
                         title: new Text("Select Minutes"),
                         onConfirm: (Picker picker, List value) {
                           setState(() {
-                            breakTime = value[0];
+                            breakTime = ++value[0];
                           });
 
                           //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
@@ -410,4 +409,38 @@ class _MatoState extends State<Mato> {
       barrierDismissible: true,
     );
   }
+
+  dynamic displayInfoDialog(){
+    return showDialog(
+     // barrierColor: Colors.green[100],
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding: EdgeInsets.all(0.0),
+        content: Container(
+          // padding: EdgeInsets.zero,
+          //  alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                
+                Text('Information',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20,),),
+                SizedBox(height: 30,),
+                Text('\'Count down\' is the amount of time you want to work for.\n\n\'Break Length\' is the time in between your work sessions.\n\nAs for the \'goal\', you will earn a single tomato for each work session that you complete. This is a way to measure your success.\n'),
+                Text('Count Down: $customTime minutes\nBreak Length: $breakTime minutes\nGoal: $userGoal tomatoes '),
+                SizedBox(height: 30,),
+                OutlineButton(onPressed: (){
+                  Navigator.pop(context, true);
+                }, child: Text('Got it', style: TextStyle(fontWeight: FontWeight.bold)),),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:my_mato/model/message.dart';
 import 'dart:async';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:flutter_rounded_progress_bar/flutter_rounded_progress_bar.dart';
 import 'package:flutter_rounded_progress_bar/rounded_progress_bar_style.dart';
 import 'package:flutter_picker/flutter_picker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 //import 'CustomPopupMenu.dart';
 //Test from Gabes Laptop
 //Test from Brookes Laptop IT WORKED.
+//if you start timer and press it fast, there are multiple instances of countdown in background-
+//we need to disable the green countdown when its running already.
 
 String tomatoPic = 'images/realistic-tomato-isolated/6146.jpg';
 
@@ -22,15 +26,17 @@ class Mato extends StatefulWidget {
 }
 
 class _MatoState extends State<Mato> {
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final List<Message> messages = [];
   List<Image> completedMato = [];
   bool timerDone = false;
   bool controlTimer = false;
   Timer masterTime;
   double percentComplete = 0;
-  int customTime = 2; // change this for default countdown
+  int customTime = 3; // change this for default countdown
   int tempInt = 0;
   int tomatoQuantity = 0;
-  int userGoal = 2;
+  int userGoal = 3;
   int breakTime = 5;
 
   // List choices = [
@@ -40,6 +46,36 @@ class _MatoState extends State<Mato> {
   // ];
 
   @override
+  void initState() {
+    super.initState();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+       // final notification = message['notification'];
+        // setState(() {
+        //   messages.add(Message(
+        //       title: notification['title'], body: notification['body']));
+        // });
+        //
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+        //block of code will execute when app is killed/not running and notification is tapped
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+        //this block of code will be executed when app is running but not open and notification is tapped
+      },
+    );
+    _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(sound: true, badge: true, alert: true));
+  }
+
+  Widget buildMessage(Message message) => ListTile(
+        title: Text(message.title),
+        subtitle: Text(message.body),
+      );
+
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
@@ -48,13 +84,14 @@ class _MatoState extends State<Mato> {
           backgroundColor: Colors.red,
           leading: FloatingActionButton(
             backgroundColor: Colors.red,
-            onPressed:(){
+            onPressed: () {
               displayInfoDialog();
             },
-          child: Icon(
+            child: Icon(
               Icons.info_outline,
               color: Colors.white,
-            ),),
+            ),
+          ),
           title: Text(
             "Mato Timer",
             style: TextStyle(color: Colors.grey.shade200),
@@ -81,18 +118,15 @@ class _MatoState extends State<Mato> {
                           children: completedMato,
                         ),
                         Container(
-
-                            child: Column(
-                            
-                              children: <Widget>[
-                                floatMenu(),
+                            child: Column(children: <Widget>[
+                          floatMenu(),
                           RoundedProgressBar(
                             height: 8,
-                            
+
                             theme: RoundedProgressBarTheme.green,
                             style: RoundedProgressBarStyle(
                                 borderWidth: 0, widthShadow: 0),
-                           // margin: EdgeInsets.symmetric(vertical: 10),
+                            // margin: EdgeInsets.symmetric(vertical: 10),
                             borderRadius: BorderRadius.circular(24),
                             percent: percentComplete,
                             childCenter: Text(
@@ -102,8 +136,10 @@ class _MatoState extends State<Mato> {
                             ),
                             //childCenter: Text('$percentComplete%', ),
                           ),
-                          
                         ])),
+                        // ListView(
+                        //   children: messages.map(buildMessage).toList(),
+                        // ),
                       ]),
                 ),
               ],
@@ -121,14 +157,15 @@ class _MatoState extends State<Mato> {
       return myTimer();
     } else {
       if (controlTimer == false) {
-        return Text(
-          '$customTime Seconds',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
+        return displayCorrectTime(customTime);
+        // return Text(
+        //   '$customTime Seconds',
+        //   style: TextStyle(
+        //     fontSize: 40,
+        //     color: Colors.white,
+        //     fontWeight: FontWeight.bold,
+        //   ),
+        // );
       }
     }
   }
@@ -167,12 +204,213 @@ class _MatoState extends State<Mato> {
       print(percentComplete);
       print('Updated Count');
       controlTimer = false;
-      breakPopup();
+      if(tomatoQuantity == userGoal){
+        metGoalPopup();
+      }else{breakPopup();}
+      
     });
   }
 
   void masterTimer() {
     masterTime = new Timer(new Duration(seconds: customTime), addTomato);
+  }
+
+  Widget displayCorrectTime(int countdown) {
+    if (countdown == 0) {
+      return Container(
+          color: Colors.white,
+          height: 500,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(35.0),
+              child: Text(
+                  '\"The secret of getting ahead is getting started. The secret of getting started is breaking your complex overwhelming tasks into small manageable tasks, and starting on the first one.\" \n\n- Mark Twain',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 16,
+                  )),
+            ),
+          ));
+    }
+
+    if (countdown < 60 && countdown > 0) {
+      return Text(
+        '$countdown seconds',
+        style: TextStyle(
+          fontSize: 40,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+
+    if (60 <= countdown && countdown < 3600) {
+      // double secondz = (countdown%60).toDouble();
+      int minutez = (countdown ~/ 60).toInt();
+
+      if (minutez == 1) {
+        return Text(
+          '$minutez minute',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      } else {
+        return Text(
+          '$minutez minutes',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      }
+    }
+    if (3600 <= countdown) {
+      int minutez1 = (countdown % 3600);
+      int hourz = (countdown ~/ 3600).toInt();
+      int minutez2 = (minutez1 ~/ 60).toInt();
+
+      if (hourz == 1 && minutez2 == 0) {
+        return Text(
+          '$hourz hour',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      }
+
+      if (minutez2 == 0 && hourz > 1) {
+        return Text(
+          '$hourz hours',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      } else {
+        return Text(
+          '$hourz:$minutez2',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget displayCorrectTimeForInfoBox(int countdown) {
+    if (countdown == 0) {
+      return Text(
+        '$countdown',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+
+    if (countdown < 60 && countdown > 0) {
+      return Text(
+        '$countdown seconds',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+
+    if (60 <= countdown && countdown < 3600) {
+      // double secondz = (countdown%60).toDouble();
+      int minutez = (countdown ~/ 60).toInt();
+
+      if (minutez == 1) {
+        return Text(
+          '$minutez minute',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      } else {
+        return Text(
+          '$minutez minutes',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      }
+    }
+    if (3600 <= countdown) {
+      int minutez1 = (countdown % 3600);
+      int hourz = (countdown ~/ 3600).toInt();
+      int minutez2 = (minutez1 ~/ 60).toInt();
+
+      if (hourz == 1 && minutez2 == 0) {
+        return Text(
+          '$hourz hour',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      }
+
+      if (minutez2 == 0 && hourz > 1) {
+        return Text(
+          '$hourz hours',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      } else {
+        return Text('$hourz:$minutez2',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ));
+      }
+    }
+  }
+  dynamic metGoalPopup(){
+    return showDialog(
+     // barrierColor: Colors.white,
+      context: context,
+      builder: (_) => AlertDialog(
+
+        contentPadding: EdgeInsets.all(0.0),
+        title: Text('CONGRATULATIONS', textAlign: TextAlign.center,),
+        content: Container(
+          // padding: EdgeInsets.zero,
+          //  alignment: Alignment.topCenter,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              
+              Padding(
+                padding: const EdgeInsets.all(25.0),
+                child: Text(
+                  'You completed the goal you set for yourself.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              RaisedButton(
+                  elevation: 25,
+                  color: Colors.blue,
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  child: Text('OK')),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
   }
 
   Widget floatMenu() {
@@ -195,19 +433,25 @@ class _MatoState extends State<Mato> {
               ),
               onLongPress: () {
                 setState(() {
+                  customTime = 1500;
                   completedMato.clear();
                   percentComplete = 0;
                   tomatoQuantity = 0;
-                  customTime = 1500;
-                  masterTime.cancel();
-                  userGoal = 2;
-                  breakTime = 5;
+                  controlTimer = false;
+
+                  userGoal = 3;
+                  breakTime = 300;
                 });
+                if (masterTime.isActive) {
+                  masterTime.cancel();
+                }
               },
               onPressed: () {
                 setState(() {
                   controlTimer = false;
-                  masterTime.cancel();
+                  if (masterTime.isActive) {
+                    masterTime.cancel();
+                  }
                 });
               }),
           PopupMenuButton<int>(
@@ -219,16 +463,21 @@ class _MatoState extends State<Mato> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 1,
-                child: Text("Set Custom Countdown", ),
-                
+                child: Text(
+                  "Set Custom Countdown",
+                ),
               ),
               PopupMenuItem(
                 value: 2,
-                child: Text("Set Custom Break", ),
+                child: Text(
+                  "Set Custom Break",
+                ),
               ),
               PopupMenuItem(
                 value: 3,
-                child: Text("Set Custom Goal", ),
+                child: Text(
+                  "Set Custom Goal",
+                ),
               ),
             ],
             onSelected: (value) {
@@ -253,14 +502,20 @@ class _MatoState extends State<Mato> {
                         hideHeader: true,
                         title: new Text("Select Hours and Minutes"),
                         onConfirm: (Picker picker, List value) {
-                          tempInt = value[0] * 60;
-                          tempInt += value[1];
+                          tempInt = value[0] * 3600;
+                          tempInt = tempInt + (value[1] * 60);
+                          print(
+                              'minutes chosen: ${value[0]} , hours chosen: ${value[1]} \n');
 
                           setState(() {
+                            if (masterTime.isActive) {
+                              masterTime.cancel();
+                            }
+
                             customTime = tempInt;
                             controlTimer = false;
                             tomatoQuantity = 0;
-                            userGoal = 0;
+                            // userGoal = 2;
                             completedMato.clear();
                           });
                         }).showDialog(context);
@@ -287,7 +542,7 @@ class _MatoState extends State<Mato> {
                         title: new Text("Select Minutes"),
                         onConfirm: (Picker picker, List value) {
                           setState(() {
-                            breakTime = ++value[0];
+                            breakTime = ++value[0] * 60;
                           });
 
                           //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
@@ -347,7 +602,7 @@ class _MatoState extends State<Mato> {
 
   dynamic breakPopup() {
     showDialog(
-      barrierColor: Colors.green[100],
+      barrierColor: Colors.white,
       context: context,
       builder: (_) => AlertDialog(
         contentPadding: EdgeInsets.all(0.0),
@@ -410,9 +665,9 @@ class _MatoState extends State<Mato> {
     );
   }
 
-  dynamic displayInfoDialog(){
+  dynamic displayInfoDialog() {
     return showDialog(
-     // barrierColor: Colors.green[100],
+      // barrierColor: Colors.green[100],
       context: context,
       builder: (_) => AlertDialog(
         contentPadding: EdgeInsets.all(0.0),
@@ -424,15 +679,61 @@ class _MatoState extends State<Mato> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                
-                Text('Information',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20,),),
-                SizedBox(height: 30,),
-                Text('\'Count down\' is the amount of time you want to work for.\n\n\'Break Length\' is the time in between your work sessions.\n\nAs for the \'goal\', you will earn a single tomato for each work session that you complete. This is a way to measure your success.\n'),
-                Text('Count Down: $customTime minutes\nBreak Length: $breakTime minutes\nGoal: $userGoal tomatoes '),
-                SizedBox(height: 30,),
-                OutlineButton(onPressed: (){
-                  Navigator.pop(context, true);
-                }, child: Text('Got it', style: TextStyle(fontWeight: FontWeight.bold)),),
+                Text(
+                  'Information',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Text(
+                    '\'Count down\' is the amount of time you want to work for.\n\n\'Break Length\' is the time in between your work sessions.\n\nAs for the \'goal\', you will earn a single tomato for each work session that you complete. This is a way to measure your success.\n'),
+
+                Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Count Down: '),
+                      displayCorrectTimeForInfoBox(customTime),
+                    ]),
+
+                Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Break Length: '),
+                      displayCorrectTimeForInfoBox(breakTime),
+                    ]),
+
+                Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Goal: '),
+                      Text('$userGoal',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Image(
+                        image: AssetImage(tomatoPic),
+                        height: 25,
+                        width: 25,
+                      ),
+                    ]),
+
+                // displayCorrectTime(customTime),
+                // displayCorrectTime(breakTime),
+                SizedBox(
+                  height: 30,
+                ),
+                OutlineButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  child: Text('Got it',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
           ),
@@ -441,6 +742,4 @@ class _MatoState extends State<Mato> {
       barrierDismissible: true,
     );
   }
-
-
 }

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "619972320647",
+    "firebase_url": "https://mato-timer.firebaseio.com",
+    "project_id": "mato-timer",
+    "storage_bucket": "mato-timer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:619972320647:android:ccbc765c552e7804dfc722",
+        "android_client_info": {
+          "package_name": "com.example.my_mato"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "619972320647-lop6do1tk09aokh5gc0bss0qouunjgjc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBisfuxEEZjBXArRb6psiF1LlhoHh69QXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "619972320647-lop6do1tk09aokh5gc0bss0qouunjgjc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

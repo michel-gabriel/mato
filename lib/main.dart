@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:my_mato/model/message.dart';
+import 'package:my_mato/notifications/message.dart';
 import 'dart:async';
-import 'package:timer_count_down/timer_count_down.dart';
 import 'package:flutter_rounded_progress_bar/flutter_rounded_progress_bar.dart';
 import 'package:flutter_rounded_progress_bar/rounded_progress_bar_style.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-//import 'CustomPopupMenu.dart';
-//Test from Gabes Laptop
-//Test from Brookes Laptop IT WORKED.
-//if you start timer and press it fast, there are multiple instances of countdown in background-
-//we need to disable the green countdown when its running already.
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:my_mato/popUps/breakPopupDialog.dart';
+import 'package:my_mato/popUps/metGoalPopupDialog.dart';
+import 'package:my_mato/infoBox/displayInfoBox.dart';
+import 'package:my_mato/notifications/notificationWidget.dart'; 
+import 'package:firebase_admob/firebase_admob.dart';
+import 'package:my_mato/timeWidgets/formatDisplayTime.dart';
+import 'package:timer_count_down/timer_count_down.dart';
+
+
+
+//add in adspace below menu bar
+
 
 String tomatoPic = 'images/realistic-tomato-isolated/6146.jpg';
 
@@ -28,30 +35,41 @@ class Mato extends StatefulWidget {
 class _MatoState extends State<Mato> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final List<Message> messages = [];
+
+
   List<Image> completedMato = [];
   bool timerDone = false;
   bool controlTimer = false;
   Timer masterTime;
+
+  Timer thirtySecondNotify;
+  Timer thirtySecondNotifyBreak;
   double percentComplete = 0;
   int customTime = 3; // change this for default countdown
   int tempInt = 0;
   int tomatoQuantity = 0;
   int userGoal = 3;
   int breakTime = 5;
-
-  // List choices = [
-  //   CustomPopupMenu(title: 'Home', icon: Icons.home),
-  //   CustomPopupMenu(title: 'Bookmarks', icon: Icons.bookmark),
-  //   CustomPopupMenu(title: 'Settings', icon: Icons.settings),
-  // ];
+  bool timerActive = false; 
 
   @override
   void initState() {
     super.initState();
+
+    final settingsAndroid = AndroidInitializationSettings('p6146_copy');
+    final settingsIOS = IOSInitializationSettings(
+        onDidReceiveLocalNotification: (id, title, body, payload) =>
+            displayInfoDialog(context, customTime, breakTime, userGoal,
+                tomatoPic) /* onSelectNotification(payload)*/);
+
+    notifications.initialize(
+        InitializationSettings(settingsAndroid, settingsIOS),
+        onSelectNotification: null /*onSelectNotification*/);
+
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         print("onMessage: $message");
-       // final notification = message['notification'];
+        // final notification = message['notification'];
         // setState(() {
         //   messages.add(Message(
         //       title: notification['title'], body: notification['body']));
@@ -67,14 +85,21 @@ class _MatoState extends State<Mato> {
         //this block of code will be executed when app is running but not open and notification is tapped
       },
     );
-    _firebaseMessaging.requestNotificationPermissions(
-        const IosNotificationSettings(sound: true, badge: true, alert: true));
-  }
 
-  Widget buildMessage(Message message) => ListTile(
-        title: Text(message.title),
-        subtitle: Text(message.body),
-      );
+    _firebaseMessaging.requestNotificationPermissions(
+      const IosNotificationSettings(sound: true, badge: true, alert: true),
+    );
+  }
+  //Both these widgets below are on tap local notification reaction and to display notification on screen.
+  // Future onSelectNotification(String payload) async => await Navigator.push(
+  //       context,
+  //       MaterialPageRoute(builder: (context) => displayInfoDialog(context, customTime, breakTime, userGoal, tomatoPic)),
+  //     );
+
+  // Widget buildMessage(Messagez message) => ListTile(
+  //       title: Text(message.title),
+  //       subtitle: Text(message.body),
+  //     );
 
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -85,7 +110,8 @@ class _MatoState extends State<Mato> {
           leading: FloatingActionButton(
             backgroundColor: Colors.red,
             onPressed: () {
-              displayInfoDialog();
+              displayInfoDialog(
+                  context, customTime, breakTime, userGoal, tomatoPic);
             },
             child: Icon(
               Icons.info_outline,
@@ -119,6 +145,16 @@ class _MatoState extends State<Mato> {
                         ),
                         Container(
                             child: Column(children: <Widget>[
+                          RaisedButton(
+                            onPressed: () => showOngoingNotification(
+                                notifications,
+                                title: 'Title',
+                                body: 'Body'),
+                            child: Text('Notifications'),
+                          ),
+                          RaisedButton(
+                              onPressed: notifications.cancelAll,
+                              child: Text('Cancel Notifications')),
                           floatMenu(),
                           RoundedProgressBar(
                             height: 8,
@@ -152,7 +188,9 @@ class _MatoState extends State<Mato> {
 
   Widget showTimer() {
     if (controlTimer == true) {
-      masterTimer();
+      
+      if(!timerActive)(masterTimer());
+      //  print('Timer tick is: ${masterTime.tick}');
 
       return myTimer();
     } else {
@@ -171,6 +209,7 @@ class _MatoState extends State<Mato> {
   }
 
   Widget myTimer() {
+    timerActive = true; 
     return Countdown(
       seconds: customTime, //1500 secs = 25 min
       build: (_, customTime) => Text(
@@ -183,14 +222,11 @@ class _MatoState extends State<Mato> {
       ),
       interval: Duration(milliseconds: 100),
 
-      onFinished: (masterTime) {
-        masterTime.cancel();
-      },
-    );
-  }
-
-  void addTomato() {
-    return setState(() {
+      onFinished: () {
+      //  masterTime.cancel();
+        print('MADE IT');
+setState(() {
+       print('MADE IT x2');
       completedMato.add(
         Image(
           image: AssetImage(tomatoPic),
@@ -204,215 +240,59 @@ class _MatoState extends State<Mato> {
       print(percentComplete);
       print('Updated Count');
       controlTimer = false;
-      if(tomatoQuantity == userGoal){
-        metGoalPopup();
-      }else{breakPopup();}
-      
+
+      if (tomatoQuantity == userGoal) {
+        metGoalPopup(context);
+      } else {
+        breakPopup(context, breakTime);
+        breakMasterTime();
+      }
     });
-  }
 
-  void masterTimer() {
-    masterTime = new Timer(new Duration(seconds: customTime), addTomato);
-  }
 
-  Widget displayCorrectTime(int countdown) {
-    if (countdown == 0) {
-      return Container(
-          color: Colors.white,
-          height: 500,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(35.0),
-              child: Text(
-                  '\"The secret of getting ahead is getting started. The secret of getting started is breaking your complex overwhelming tasks into small manageable tasks, and starting on the first one.\" \n\n- Mark Twain',
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 16,
-                  )),
-            ),
-          ));
-    }
-
-    if (countdown < 60 && countdown > 0) {
-      return Text(
-        '$countdown seconds',
-        style: TextStyle(
-          fontSize: 40,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      );
-    }
-
-    if (60 <= countdown && countdown < 3600) {
-      // double secondz = (countdown%60).toDouble();
-      int minutez = (countdown ~/ 60).toInt();
-
-      if (minutez == 1) {
-        return Text(
-          '$minutez minute',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        return Text(
-          '$minutez minutes',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      }
-    }
-    if (3600 <= countdown) {
-      int minutez1 = (countdown % 3600);
-      int hourz = (countdown ~/ 3600).toInt();
-      int minutez2 = (minutez1 ~/ 60).toInt();
-
-      if (hourz == 1 && minutez2 == 0) {
-        return Text(
-          '$hourz hour',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      }
-
-      if (minutez2 == 0 && hourz > 1) {
-        return Text(
-          '$hourz hours',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        return Text(
-          '$hourz:$minutez2',
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget displayCorrectTimeForInfoBox(int countdown) {
-    if (countdown == 0) {
-      return Text(
-        '$countdown',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      );
-    }
-
-    if (countdown < 60 && countdown > 0) {
-      return Text(
-        '$countdown seconds',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      );
-    }
-
-    if (60 <= countdown && countdown < 3600) {
-      // double secondz = (countdown%60).toDouble();
-      int minutez = (countdown ~/ 60).toInt();
-
-      if (minutez == 1) {
-        return Text(
-          '$minutez minute',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        return Text(
-          '$minutez minutes',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      }
-    }
-    if (3600 <= countdown) {
-      int minutez1 = (countdown % 3600);
-      int hourz = (countdown ~/ 3600).toInt();
-      int minutez2 = (minutez1 ~/ 60).toInt();
-
-      if (hourz == 1 && minutez2 == 0) {
-        return Text(
-          '$hourz hour',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      }
-
-      if (minutez2 == 0 && hourz > 1) {
-        return Text(
-          '$hourz hours',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        return Text('$hourz:$minutez2',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ));
-      }
-    }
-  }
-  dynamic metGoalPopup(){
-    return showDialog(
-     // barrierColor: Colors.white,
-      context: context,
-      builder: (_) => AlertDialog(
-
-        contentPadding: EdgeInsets.all(0.0),
-        title: Text('CONGRATULATIONS', textAlign: TextAlign.center,),
-        content: Container(
-          // padding: EdgeInsets.zero,
-          //  alignment: Alignment.topCenter,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              
-              Padding(
-                padding: const EdgeInsets.all(25.0),
-                child: Text(
-                  'You completed the goal you set for yourself.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              
-              RaisedButton(
-                  elevation: 25,
-                  color: Colors.blue,
-                  textColor: Colors.white,
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                  child: Text('OK')),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
+      },
     );
   }
 
+  // void addTomato() {
+  //   return setState(() {
+  //     completedMato.add(
+  //       Image(
+  //         image: AssetImage(tomatoPic),
+  //         height: 25,
+  //         width: 25,
+  //       ),
+  //     );
+  //     ++tomatoQuantity;
+  //     percentComplete = (tomatoQuantity / userGoal) * 100;
+
+  //     print(percentComplete);
+  //     print('Updated Count');
+  //     controlTimer = false;
+
+  //     if (tomatoQuantity == userGoal) {
+  //       metGoalPopup(context);
+  //     } else {
+  //       breakPopup(context, breakTime);
+  //       breakMasterTime();
+  //     }
+  //   });
+  // }
+
+
+  dynamic masterTimer() {
+   // masterTime = new Timer(new Duration(seconds: customTime), addTomato);
+
+    thirtySecondNotify =
+        new Timer(new Duration(seconds: (customTime - 30)), showNotification);
+  }
+
+  dynamic breakMasterTime() {
+    thirtySecondNotifyBreak = new Timer(
+        new Duration(seconds: (breakTime - 30)), showBreakNotification);
+  }
+
+  
   Widget floatMenu() {
     return Container(
       decoration: BoxDecoration(
@@ -438,20 +318,23 @@ class _MatoState extends State<Mato> {
                   percentComplete = 0;
                   tomatoQuantity = 0;
                   controlTimer = false;
-
+                  timerActive = false; 
                   userGoal = 3;
                   breakTime = 300;
                 });
-                if (masterTime.isActive) {
-                  masterTime.cancel();
-                }
+                
+                 // masterTime.cancel();
+                   if(timerActive) {thirtySecondNotify.cancel();}
+                
               },
               onPressed: () {
                 setState(() {
                   controlTimer = false;
-                  if (masterTime.isActive) {
-                    masterTime.cancel();
-                  }
+                  timerActive = false;
+                  
+                   // masterTime.cancel();
+                     if(timerActive) {thirtySecondNotify.cancel();}
+                  
                 });
               }),
           PopupMenuButton<int>(
@@ -505,15 +388,18 @@ class _MatoState extends State<Mato> {
                           tempInt = value[0] * 3600;
                           tempInt = tempInt + (value[1] * 60);
                           print(
-                              'minutes chosen: ${value[0]} , hours chosen: ${value[1]} \n');
-
+                              'minutes chosen: ${value[1]} , hours chosen: ${value[0]} \n');
+                          
+                          
+                          timerActive = false; 
                           setState(() {
-                            if (masterTime.isActive) {
-                              masterTime.cancel();
-                            }
+                          
+                         if(timerActive) {thirtySecondNotify.cancel();}
 
+                            print('Custom Timer setSt worked.');
                             customTime = tempInt;
                             controlTimer = false;
+
                             tomatoQuantity = 0;
                             // userGoal = 2;
                             completedMato.clear();
@@ -543,6 +429,12 @@ class _MatoState extends State<Mato> {
                         onConfirm: (Picker picker, List value) {
                           setState(() {
                             breakTime = ++value[0] * 60;
+
+                            //controlTimer = false;
+                           
+                           
+                           
+                            
                           });
 
                           //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
@@ -581,6 +473,12 @@ class _MatoState extends State<Mato> {
 
                             userGoal = value[0] + 1;
                             completedMato.clear();
+
+                            
+                            
+                            //  masterTime.cancel();
+                             
+                            
                           });
                         }).showDialog(context);
                   }
@@ -597,149 +495,6 @@ class _MatoState extends State<Mato> {
               }),
         ],
       ),
-    );
-  }
-
-  dynamic breakPopup() {
-    showDialog(
-      barrierColor: Colors.white,
-      context: context,
-      builder: (_) => AlertDialog(
-        contentPadding: EdgeInsets.all(0.0),
-        content: Container(
-          // padding: EdgeInsets.zero,
-          //  alignment: Alignment.topCenter,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LinearProgressIndicator(
-                // value: breakTimer,
-
-                backgroundColor: Colors.green[100],
-                valueColor: new AlwaysStoppedAnimation<Color>(Colors.blue),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Text('Nice work, now take a break',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  )),
-              Padding(
-                padding: const EdgeInsets.all(25.0),
-                child: Text(
-                  'We will remind you when it is time to get back to work.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Countdown(
-                seconds: breakTime, //1500 secs = 25 min
-                build: (_, double breakTime) => Text(
-                  breakTime.toString(),
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.orange,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                interval: Duration(seconds: 1),
-
-                onFinished: () {
-                  Navigator.pop(context, true);
-                },
-              ),
-              RaisedButton(
-                  elevation: 25,
-                  color: Colors.blue,
-                  textColor: Colors.white,
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                  child: Text('I don\'t take breaks!')),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
-    );
-  }
-
-  dynamic displayInfoDialog() {
-    return showDialog(
-      // barrierColor: Colors.green[100],
-      context: context,
-      builder: (_) => AlertDialog(
-        contentPadding: EdgeInsets.all(0.0),
-        content: Container(
-          // padding: EdgeInsets.zero,
-          //  alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Information',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                Text(
-                    '\'Count down\' is the amount of time you want to work for.\n\n\'Break Length\' is the time in between your work sessions.\n\nAs for the \'goal\', you will earn a single tomato for each work session that you complete. This is a way to measure your success.\n'),
-
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('Count Down: '),
-                      displayCorrectTimeForInfoBox(customTime),
-                    ]),
-
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('Break Length: '),
-                      displayCorrectTimeForInfoBox(breakTime),
-                    ]),
-
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('Goal: '),
-                      Text('$userGoal',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Image(
-                        image: AssetImage(tomatoPic),
-                        height: 25,
-                        width: 25,
-                      ),
-                    ]),
-
-                // displayCorrectTime(customTime),
-                // displayCorrectTime(breakTime),
-                SizedBox(
-                  height: 30,
-                ),
-                OutlineButton(
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                  child: Text('Got it',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      barrierDismissible: true,
     );
   }
 }

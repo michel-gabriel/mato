@@ -9,17 +9,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:my_mato/popUps/breakPopupDialog.dart';
 import 'package:my_mato/popUps/metGoalPopupDialog.dart';
 import 'package:my_mato/infoBox/displayInfoBox.dart';
-import 'package:my_mato/notifications/notificationWidget.dart'; 
+import 'package:my_mato/notifications/notificationWidget.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:my_mato/timeWidgets/formatDisplayTime.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 
-
-
-//add in adspace below menu bar
-
-
 String tomatoPic = 'images/realistic-tomato-isolated/6146.jpg';
+const String testDevice = 'Mobile_ID'; //af1be50a6c49c952
 
 void main() {
   runApp(MaterialApp(
@@ -36,6 +32,23 @@ class _MatoState extends State<Mato> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final List<Message> messages = [];
 
+  static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+    testDevices: testDevice != null ? <String>[testDevice] : null,
+    keywords: <String>['Timer', 'Countdown'],
+  );
+
+  BannerAd _bannerAd;
+
+  BannerAd createBannerAd() {
+    return BannerAd(
+        adUnitId:
+            BannerAd.testAdUnitId /*'ca-app-pub-2770950394919073/4234856034'*/,
+        size: AdSize.banner, //change size of banner
+        targetingInfo: targetingInfo,
+        listener: (MobileAdEvent event) {
+          print('Banner Ad $event');
+        });
+  }
 
   List<Image> completedMato = [];
   bool timerDone = false;
@@ -50,7 +63,7 @@ class _MatoState extends State<Mato> {
   int tomatoQuantity = 0;
   int userGoal = 3;
   int breakTime = 5;
-  bool timerActive = false; 
+  bool timerActive = false;
 
   @override
   void initState() {
@@ -89,6 +102,18 @@ class _MatoState extends State<Mato> {
     _firebaseMessaging.requestNotificationPermissions(
       const IosNotificationSettings(sound: true, badge: true, alert: true),
     );
+
+    FirebaseAdMob.instance
+        .initialize(appId: 'ca-app-pub-2770950394919073~9617925096');
+    _bannerAd = createBannerAd()
+      ..load()
+      ..show();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd.dispose();
+    super.dispose();
   }
   //Both these widgets below are on tap local notification reaction and to display notification on screen.
   // Future onSelectNotification(String payload) async => await Navigator.push(
@@ -172,6 +197,7 @@ class _MatoState extends State<Mato> {
                             ),
                             //childCenter: Text('$percentComplete%', ),
                           ),
+                          SizedBox(height: 50),
                         ])),
                         // ListView(
                         //   children: messages.map(buildMessage).toList(),
@@ -188,8 +214,7 @@ class _MatoState extends State<Mato> {
 
   Widget showTimer() {
     if (controlTimer == true) {
-      
-      if(!timerActive)(masterTimer());
+      if (!timerActive) (masterTimer());
       //  print('Timer tick is: ${masterTime.tick}');
 
       return myTimer();
@@ -209,7 +234,7 @@ class _MatoState extends State<Mato> {
   }
 
   Widget myTimer() {
-    timerActive = true; 
+    timerActive = true;
     return Countdown(
       seconds: customTime, //1500 secs = 25 min
       build: (_, customTime) => Text(
@@ -223,33 +248,31 @@ class _MatoState extends State<Mato> {
       interval: Duration(milliseconds: 100),
 
       onFinished: () {
-      //  masterTime.cancel();
+        //  masterTime.cancel();
         print('MADE IT');
-setState(() {
-       print('MADE IT x2');
-      completedMato.add(
-        Image(
-          image: AssetImage(tomatoPic),
-          height: 25,
-          width: 25,
-        ),
-      );
-      ++tomatoQuantity;
-      percentComplete = (tomatoQuantity / userGoal) * 100;
+        setState(() {
+          print('MADE IT x2');
+          completedMato.add(
+            Image(
+              image: AssetImage(tomatoPic),
+              height: 25,
+              width: 25,
+            ),
+          );
+          ++tomatoQuantity;
+          percentComplete = (tomatoQuantity / userGoal) * 100;
 
-      print(percentComplete);
-      print('Updated Count');
-      controlTimer = false;
+          print(percentComplete);
+          print('Updated Count');
+          controlTimer = false;
 
-      if (tomatoQuantity == userGoal) {
-        metGoalPopup(context);
-      } else {
-        breakPopup(context, breakTime);
-        breakMasterTime();
-      }
-    });
-
-
+          if (tomatoQuantity == userGoal) {
+            metGoalPopup(context);
+          } else {
+            breakPopup(context, breakTime);
+            breakMasterTime();
+          }
+        });
       },
     );
   }
@@ -279,9 +302,8 @@ setState(() {
   //   });
   // }
 
-
   dynamic masterTimer() {
-   // masterTime = new Timer(new Duration(seconds: customTime), addTomato);
+    // masterTime = new Timer(new Duration(seconds: customTime), addTomato);
 
     thirtySecondNotify =
         new Timer(new Duration(seconds: (customTime - 30)), showNotification);
@@ -292,7 +314,6 @@ setState(() {
         new Duration(seconds: (breakTime - 30)), showBreakNotification);
   }
 
-  
   Widget floatMenu() {
     return Container(
       decoration: BoxDecoration(
@@ -313,28 +334,33 @@ setState(() {
               ),
               onLongPress: () {
                 setState(() {
+                  if (timerActive) {
+                    thirtySecondNotify.cancel();
+                    thirtySecondNotifyBreak.cancel();
+                  }
                   customTime = 1500;
                   completedMato.clear();
                   percentComplete = 0;
                   tomatoQuantity = 0;
                   controlTimer = false;
-                  timerActive = false; 
+                  timerActive = false;
                   userGoal = 3;
                   breakTime = 300;
                 });
-                
-                 // masterTime.cancel();
-                   if(timerActive) {thirtySecondNotify.cancel();}
-                
+
+                // masterTime.cancel();
               },
               onPressed: () {
+                // getID();
                 setState(() {
+                  if (timerActive) {
+                    thirtySecondNotify.cancel();
+                    thirtySecondNotifyBreak.cancel();
+                  }
                   controlTimer = false;
                   timerActive = false;
-                  
-                   // masterTime.cancel();
-                     if(timerActive) {thirtySecondNotify.cancel();}
-                  
+
+                  // masterTime.cancel();
                 });
               }),
           PopupMenuButton<int>(
@@ -389,12 +415,12 @@ setState(() {
                           tempInt = tempInt + (value[1] * 60);
                           print(
                               'minutes chosen: ${value[1]} , hours chosen: ${value[0]} \n');
-                          
-                          
-                          timerActive = false; 
+
+                          timerActive = false;
                           setState(() {
-                          
-                         if(timerActive) {thirtySecondNotify.cancel();}
+                            if (timerActive) {
+                              thirtySecondNotify.cancel();
+                            }
 
                             print('Custom Timer setSt worked.');
                             customTime = tempInt;
@@ -431,10 +457,6 @@ setState(() {
                             breakTime = ++value[0] * 60;
 
                             //controlTimer = false;
-                           
-                           
-                           
-                            
                           });
 
                           //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
@@ -474,11 +496,7 @@ setState(() {
                             userGoal = value[0] + 1;
                             completedMato.clear();
 
-                            
-                            
                             //  masterTime.cancel();
-                             
-                            
                           });
                         }).showDialog(context);
                   }

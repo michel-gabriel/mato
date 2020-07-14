@@ -30,6 +30,13 @@
             {
               "client_id": "619972320647-lop6do1tk09aokh5gc0bss0qouunjgjc.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "619972320647-1bppq6b156g0hrg8rqgi3ijqp2u3sftu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tomato.mator"
+              }
             }
           ]
         }

@@ -170,16 +170,16 @@ class _MatoState extends State<Mato> {
                         ),
                         Container(
                             child: Column(children: <Widget>[
-                          RaisedButton(
-                            onPressed: () => showOngoingNotification(
-                                notifications,
-                                title: 'Title',
-                                body: 'Body'),
-                            child: Text('Notifications'),
-                          ),
-                          RaisedButton(
-                              onPressed: notifications.cancelAll,
-                              child: Text('Cancel Notifications')),
+                          // RaisedButton(
+                          //   onPressed: () => showOngoingNotification(
+                          //       notifications,
+                          //       title: 'Title',
+                          //       body: 'Body'),
+                          //   child: Text('Notifications'),
+                          // ),
+                          // RaisedButton(
+                          //     onPressed: notifications.cancelAll,
+                          //     child: Text('Cancel Notifications')),
                           floatMenu(),
                           RoundedProgressBar(
                             height: 8,

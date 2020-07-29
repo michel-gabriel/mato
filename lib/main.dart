@@ -54,11 +54,11 @@ class _MatoState extends State<Mato> {
   bool timerDone = false;
   bool controlTimer = false;
   Timer masterTime;
-
+  bool breakMasterTimeisActive = false;
   Timer thirtySecondNotify;
   Timer thirtySecondNotifyBreak;
   double percentComplete = 0;
-  int customTime = 3; // change this for default countdown
+  int customTime = 40; // change this for default countdown
   int tempInt = 0;
   int tomatoQuantity = 0;
   int userGoal = 3;
@@ -170,16 +170,16 @@ class _MatoState extends State<Mato> {
                         ),
                         Container(
                             child: Column(children: <Widget>[
-                          // RaisedButton(
-                          //   onPressed: () => showOngoingNotification(
-                          //       notifications,
-                          //       title: 'Title',
-                          //       body: 'Body'),
-                          //   child: Text('Notifications'),
-                          // ),
-                          // RaisedButton(
-                          //     onPressed: notifications.cancelAll,
-                          //     child: Text('Cancel Notifications')),
+                          RaisedButton(
+                            onPressed: () => showOngoingNotification(
+                                notifications,
+                                title: 'Title',
+                                body: 'Body'),
+                            child: Text('Notifications'),
+                          ),
+                          RaisedButton(
+                              onPressed: notifications.cancelAll,
+                              child: Text('Cancel Notifications')),
                           floatMenu(),
                           RoundedProgressBar(
                             height: 8,
@@ -216,7 +216,7 @@ class _MatoState extends State<Mato> {
     if (controlTimer == true) {
       if (!timerActive) (masterTimer());
       //  print('Timer tick is: ${masterTime.tick}');
-
+      
       return myTimer();
     } else {
       if (controlTimer == false) {
@@ -248,10 +248,9 @@ class _MatoState extends State<Mato> {
       interval: Duration(milliseconds: 100),
 
       onFinished: () {
-        //  masterTime.cancel();
-        print('MADE IT');
+       
         setState(() {
-          print('MADE IT x2');
+          
           completedMato.add(
             Image(
               image: AssetImage(tomatoPic),
@@ -265,11 +264,12 @@ class _MatoState extends State<Mato> {
           print(percentComplete);
           print('Updated Count');
           controlTimer = false;
-
+          timerActive = false; 
           if (tomatoQuantity == userGoal) {
             metGoalPopup(context);
           } else {
             breakPopup(context, breakTime);
+            breakMasterTimeisActive = true; 
             breakMasterTime();
           }
         });
@@ -306,12 +306,12 @@ class _MatoState extends State<Mato> {
     // masterTime = new Timer(new Duration(seconds: customTime), addTomato);
 
     thirtySecondNotify =
-        new Timer(new Duration(seconds: (customTime - 30)), showNotification);
+        new Timer(new Duration(seconds: ((customTime+29)-customTime)), showNotification);
   }
 
   dynamic breakMasterTime() {
     thirtySecondNotifyBreak = new Timer(
-        new Duration(seconds: (breakTime - 30)), showBreakNotification);
+        new Duration(seconds: ((breakTime+30) - breakTime)), showBreakNotification);
   }
 
   Widget floatMenu() {
@@ -336,31 +336,34 @@ class _MatoState extends State<Mato> {
                 setState(() {
                   if (timerActive) {
                     thirtySecondNotify.cancel();
-                    thirtySecondNotifyBreak.cancel();
+                    
                   }
+                  if(breakMasterTimeisActive)thirtySecondNotifyBreak.cancel();
                   customTime = 1500;
                   completedMato.clear();
                   percentComplete = 0;
                   tomatoQuantity = 0;
                   controlTimer = false;
                   timerActive = false;
+                  breakMasterTimeisActive = false; 
                   userGoal = 3;
                   breakTime = 300;
                 });
 
-                // masterTime.cancel();
+                
               },
               onPressed: () {
                 // getID();
                 setState(() {
                   if (timerActive) {
                     thirtySecondNotify.cancel();
-                    thirtySecondNotifyBreak.cancel();
+                    
                   }
+                  if(breakMasterTimeisActive)thirtySecondNotifyBreak.cancel();
                   controlTimer = false;
                   timerActive = false;
-
-                  // masterTime.cancel();
+                  breakMasterTimeisActive = false; 
+                  print('cancel set state is working. ');
                 });
               }),
           PopupMenuButton<int>(
@@ -416,7 +419,7 @@ class _MatoState extends State<Mato> {
                           print(
                               'minutes chosen: ${value[1]} , hours chosen: ${value[0]} \n');
 
-                          timerActive = false;
+                          // timerActive = false;
                           setState(() {
                             if (timerActive) {
                               thirtySecondNotify.cancel();
@@ -425,7 +428,7 @@ class _MatoState extends State<Mato> {
                             print('Custom Timer setSt worked.');
                             customTime = tempInt;
                             controlTimer = false;
-
+                           
                             tomatoQuantity = 0;
                             // userGoal = 2;
                             completedMato.clear();

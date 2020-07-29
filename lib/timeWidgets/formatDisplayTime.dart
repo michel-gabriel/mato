@@ -80,6 +80,16 @@ Widget displayCorrectTime(int countdown) {
             fontWeight: FontWeight.bold,
           ),
         );
+      } 
+       if (minutez2 > 0 && minutez2 < 10 && hourz > 1) {
+        return Text(
+          '$hourz:0$minutez2',
+          style: TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        );
       } else {
         return Text(
           '$hourz:$minutez2',

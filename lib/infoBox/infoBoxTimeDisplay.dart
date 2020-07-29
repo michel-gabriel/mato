@@ -62,11 +62,24 @@ Widget displayCorrectTimeForInfoBox(int countdown) {
             fontWeight: FontWeight.bold,
           ),
         );
+      } 
+      if (minutez2 > 0 && minutez2 < 10 && hourz > 1) {
+        return Text(
+          '$hourz:0$minutez2',
+          style: TextStyle(
+           
+            fontWeight: FontWeight.bold,
+          ),
+        );
       } else {
-        return Text('$hourz:$minutez2',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ));
+        return Text(
+          '$hourz:$minutez2',
+          style: TextStyle(
+            
+            fontWeight: FontWeight.bold,
+          ),
+        );
       }
+      
     }
   }

@@ -46,7 +46,7 @@ class _MatoState extends State<Mato> {
         size: AdSize.banner, //change size of banner
         targetingInfo: targetingInfo,
         listener: (MobileAdEvent event) {
-          print('Banner Ad $event');
+          
         });
   }
 
@@ -81,7 +81,7 @@ class _MatoState extends State<Mato> {
 
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
-        print("onMessage: $message");
+       // print("onMessage: $message");
         // final notification = message['notification'];
         // setState(() {
         //   messages.add(Message(
@@ -90,11 +90,11 @@ class _MatoState extends State<Mato> {
         //
       },
       onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
+      //  print("onLaunch: $message");
         //block of code will execute when app is killed/not running and notification is tapped
       },
       onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
+     //   print("onResume: $message");
         //this block of code will be executed when app is running but not open and notification is tapped
       },
     );
@@ -215,20 +215,13 @@ class _MatoState extends State<Mato> {
   Widget showTimer() {
     if (controlTimer == true) {
       if (!timerActive) (masterTimer());
-      //  print('Timer tick is: ${masterTime.tick}');
+     
       
       return myTimer();
     } else {
       if (controlTimer == false) {
         return displayCorrectTime(customTime);
-        // return Text(
-        //   '$customTime Seconds',
-        //   style: TextStyle(
-        //     fontSize: 40,
-        //     color: Colors.white,
-        //     fontWeight: FontWeight.bold,
-        //   ),
-        // );
+       
       }
     }
   }
@@ -261,8 +254,7 @@ class _MatoState extends State<Mato> {
           ++tomatoQuantity;
           percentComplete = (tomatoQuantity / userGoal) * 100;
 
-          print(percentComplete);
-          print('Updated Count');
+         
           controlTimer = false;
           timerActive = false; 
           if (tomatoQuantity == userGoal) {
@@ -277,33 +269,9 @@ class _MatoState extends State<Mato> {
     );
   }
 
-  // void addTomato() {
-  //   return setState(() {
-  //     completedMato.add(
-  //       Image(
-  //         image: AssetImage(tomatoPic),
-  //         height: 25,
-  //         width: 25,
-  //       ),
-  //     );
-  //     ++tomatoQuantity;
-  //     percentComplete = (tomatoQuantity / userGoal) * 100;
-
-  //     print(percentComplete);
-  //     print('Updated Count');
-  //     controlTimer = false;
-
-  //     if (tomatoQuantity == userGoal) {
-  //       metGoalPopup(context);
-  //     } else {
-  //       breakPopup(context, breakTime);
-  //       breakMasterTime();
-  //     }
-  //   });
-  // }
 
   dynamic masterTimer() {
-    // masterTime = new Timer(new Duration(seconds: customTime), addTomato);
+   
 
     thirtySecondNotify =
         new Timer(new Duration(seconds: ((customTime+29)-customTime)), showNotification);
@@ -363,7 +331,7 @@ class _MatoState extends State<Mato> {
                   controlTimer = false;
                   timerActive = false;
                   breakMasterTimeisActive = false; 
-                  print('cancel set state is working. ');
+                 
                 });
               }),
           PopupMenuButton<int>(
@@ -396,7 +364,7 @@ class _MatoState extends State<Mato> {
               switch (value) {
                 case 1:
                   {
-                    print("Just set timer");
+                  
 
                     Picker(
                         adapter: NumberPickerAdapter(data: [
@@ -416,16 +384,15 @@ class _MatoState extends State<Mato> {
                         onConfirm: (Picker picker, List value) {
                           tempInt = value[0] * 3600;
                           tempInt = tempInt + (value[1] * 60);
-                          print(
-                              'minutes chosen: ${value[1]} , hours chosen: ${value[0]} \n');
+                         
 
-                          // timerActive = false;
+                          
                           setState(() {
                             if (timerActive) {
                               thirtySecondNotify.cancel();
                             }
 
-                            print('Custom Timer setSt worked.');
+                          
                             customTime = tempInt;
                             controlTimer = false;
                            
@@ -439,7 +406,7 @@ class _MatoState extends State<Mato> {
 
                 case 2:
                   {
-                    print("Just set break");
+                   
 
                     Picker(
                         adapter: NumberPickerAdapter(data: [
@@ -459,17 +426,16 @@ class _MatoState extends State<Mato> {
                           setState(() {
                             breakTime = ++value[0] * 60;
 
-                            //controlTimer = false;
                           });
 
-                          //   Timer(new Duration(seconds: customTime), finishedGoal); //Might have to move this.
+                          
                         }).showDialog(context);
                   }
                   break;
 
                 case 3:
                   {
-                    print("Just set goal");
+                 
 
                     Picker(
                         adapter: NumberPickerAdapter(data: [
@@ -491,7 +457,7 @@ class _MatoState extends State<Mato> {
                         looping: true,
                         title: new Text("Select a Goal"),
                         onConfirm: (Picker picker, List value) {
-                          print(value[0]);
+                          
                           setState(() {
                             percentComplete = 0;
                             tomatoQuantity = 0;
@@ -499,7 +465,7 @@ class _MatoState extends State<Mato> {
                             userGoal = value[0] + 1;
                             completedMato.clear();
 
-                            //  masterTime.cancel();
+                            
                           });
                         }).showDialog(context);
                   }

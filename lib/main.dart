@@ -58,11 +58,11 @@ class _MatoState extends State<Mato> {
   Timer thirtySecondNotify;
   Timer thirtySecondNotifyBreak;
   double percentComplete = 0;
-  int customTime = 40; // change this for default countdown
+  int customTime = 1500; // change this for default countdown
   int tempInt = 0;
   int tomatoQuantity = 0;
   int userGoal = 3;
-  int breakTime = 5;
+  int breakTime = 300;
   bool timerActive = false;
 
   @override
